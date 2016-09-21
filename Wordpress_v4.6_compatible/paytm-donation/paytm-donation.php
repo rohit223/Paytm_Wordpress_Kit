@@ -446,17 +446,17 @@ function paytm_donation_response(){
 		if(verifychecksum_e($_POST,$paytm_merchant_key,$_POST['CHECKSUMHASH']) === "TRUE"){
 			if($_POST['RESPCODE'] =="01"){
 				$wpdb->query($wpdb->prepare("UPDATE FROM " . $wpdb->prefix . "paytm_donation WHERE id = %d", $_POST['ORDERID']));
-$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Complete Payment' WHERE  id =". $_POST['ORDERID']));
+$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Complete Payment' WHERE  id = %d", $_POST['ORDERID']));
 				$msg= "Thank you for your order . Your transaction has been successful.";
 			}else{
 				$msg= "Thank You. However, the transaction has been Failed For Reason  : "  . sanitize_text_field($_POST['RESPMSG']);
-$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Canceled Payment' WHERE  id =". $_POST['ORDERID']));
+$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Canceled Payment' WHERE  id = %d", $_POST['ORDERID']));
 	
 			}
 		}else{
 		
 			$msg= "Security error!";
-$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Payment Error' WHERE  id =". $_POST['ORDERID']));
+$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Payment Error' WHERE  id = %d", $_POST['ORDERID']));
 		}
 		$redirect_url =get_site_url() . '/' . get_permalink(get_the_ID());//echo $redirect_url ."<br />";
 		$redirect_url = add_query_arg( array('donation_msg'=> urlencode($msg)));
