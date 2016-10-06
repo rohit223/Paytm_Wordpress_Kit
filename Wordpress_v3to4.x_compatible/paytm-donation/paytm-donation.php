@@ -153,6 +153,14 @@ function paytm_settings_list(){
 			'value'   => 'Paytm',
 			'type'    => 'textbox',
       'hint'    => 'the default text to be used for buttons or links if none is provided'
+		),
+		array(
+			'display' => 'Set CallBack URL',	
+			'name'    => 'paytm_callback',
+			'value'   => 'YES',
+			'values'  => array('YES'=>'YES','NO'=>'NO'),
+			'type'    => 'select',
+			'hint'    => 'Select No to disable CallBack URL'
 		)
 		
 	);
@@ -235,7 +243,8 @@ function paytm_donate_button() {
 						'paytm_channel_id' => trim(get_option('paytm_channel_id')),
 						'paytm_mode' => trim(get_option('paytm_mode')),
 						'paytm_amount' => trim(get_option('paytm_amount')),		
-						'paytm_content' => trim(get_option('paytm_content'))
+						'paytm_content' => trim(get_option('paytm_content')),
+						'paytm_callback' => trim(get_option('paytm_callback'))
 					)
 				);
 		if(isset($_POST['paytmcheckout'])){		
@@ -309,14 +318,48 @@ function paytm_donate_button() {
 						'CUST_ID' => $_POST['donor_email'],
 						'EMAIL' => $_POST['donor_email'],
 					);
+					if($paytm_callback=='YES')
+					{
+						$post_params["CALLBACK_URL"] = get_permalink();
+					}
 						
 						$checkSum = getChecksumFromArray ($post_params,$paytm_merchant_key);
+						$call = get_permalink();
 						$action_url="https://pguat.paytm.com/oltp-web/processTransaction?orderid=$order_id";
 						if($paytm_mode == 'LIVE'){
 							$action_url="https://secure.paytm.in/oltp-web/processTransaction?orderid=$order_id";
 						}
-						
+						if($paytm_callback=='YES')
+						{
 						$html= <<<EOF
+						
+								<center><h1>Please do not refresh this page...</h1></center>
+									<form method="post" action="$action_url" name="f1">
+									<table border="1">
+										<tbody>
+											<input type="hidden" name="MID" value="$paytm_merchant_id">
+											<input type="hidden" name="WEBSITE" value="$paytm_website">
+											<input type="hidden" name="CHANNEL_ID" value="$paytm_channel_id">
+											<input type="hidden" name="ORDER_ID" value="$order_id">
+											<input type="hidden" name="INDUSTRY_TYPE_ID" value="$paytm_industry_type_id">									
+											<input type="hidden" name="TXN_AMOUNT" value="{$_POST['donor_amount']}">
+											<input type="hidden" name="CUST_ID" value="{$_POST['donor_email']}">
+											<input type="hidden" name="EMAIL" value="{$_POST['donor_email']}">
+											<input type="hidden" name="CHECKSUMHASH" value="$checkSum">
+											<input type="hidden" name="CALLBACK_URL" value="$call">
+										</tbody>
+									</table>
+									<script type="text/javascript">
+										document.f1.submit();
+									</script>
+								</form>
+							
+		
+EOF;
+						}
+else
+{
+	$html= <<<EOF
 						
 								<center><h1>Please do not refresh this page...</h1></center>
 									<form method="post" action="$action_url" name="f1">
@@ -340,7 +383,7 @@ function paytm_donate_button() {
 							
 		
 EOF;
-		
+}	
 				return $html;
 			}else{
 				return $msg;
@@ -439,7 +482,8 @@ function paytm_donation_response(){
 						'paytm_industry_type_id' => get_option('paytm_industry_type_id'),
 						'paytm_channel_id' => get_option('paytm_channel_id'),
 						'paytm_mode' => get_option('paytm_mode'),
-						'paytm_amount' => get_option('paytm_amount')												
+						'paytm_amount' => get_option('paytm_amount'),												
+						'paytm_callback' => get_option('paytm_callback')												
 					)
 				);
 		if(verifychecksum_e($_POST,$paytm_merchant_key,$_POST['CHECKSUMHASH']) === "TRUE"){
