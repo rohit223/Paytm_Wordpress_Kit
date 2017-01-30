@@ -488,8 +488,26 @@ function paytm_donation_response(){
 				);
 		if(verifychecksum_e($_POST,$paytm_merchant_key,$_POST['CHECKSUMHASH']) === "TRUE"){
 			if($_POST['RESPCODE'] =="01"){
-				$wpdb->query($wpdb->prepare("UPDATE FROM " . $wpdb->prefix . "paytm_donation WHERE id = %d", $_POST['ORDERID']));
-				$msg= "Thank you for your order . Your transaction has been successful.";
+				// Create an array having all required parameters for status query.
+				$requestParamList = array("MID" => $paytm_merchant_id , "ORDERID" => $_POST['ORDERID']);
+				
+				// Call the PG's getTxnStatus() function for verifying the transaction status.
+				
+				$check_status_url = 'https://pguat.paytm.com/oltp/HANDLER_INTERNAL/TXNSTATUS';
+				if($paytm_mode == 'LIVE')
+				{
+					$check_status_url = 'https://secure.paytm.in/oltp/HANDLER_INTERNAL/TXNSTATUS';
+				}
+				$responseParamList = callAPI($check_status_url, $requestParamList);
+				if($responseParamList['STATUS']=='TXN_SUCCESS' && $responseParamList['TXNAMOUNT']==$order_amount)
+				{
+					$wpdb->query($wpdb->prepare("UPDATE FROM " . $wpdb->prefix . "paytm_donation WHERE id = %d", $_POST['ORDERID']));
+					$msg= "Thank you for your order . Your transaction has been successful.";
+				}
+				else 
+				{
+					$msg= "Thank You. However, the transaction has been Failed";
+				}
 			}else{
 				$msg= "Thank You. However, the transaction has been Failed For Reason  : "  . sanitize_text_field($_POST['RESPMSG']);
 			}
