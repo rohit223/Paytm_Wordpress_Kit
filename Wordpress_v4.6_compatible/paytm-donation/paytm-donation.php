@@ -506,7 +506,7 @@ function paytm_donation_response(){
 					$check_status_url = 'https://secure.paytm.in/oltp/HANDLER_INTERNAL/TXNSTATUS';
 				}
 				$responseParamList = callAPI($check_status_url, $requestParamList);
-				if($responseParamList['STATUS']=='TXN_SUCCESS' && $responseParamList['TXNAMOUNT']==$order_amount)
+				if($responseParamList['STATUS']=='TXN_SUCCESS' && $responseParamList['TXNAMOUNT']==$_POST['TXNAMOUNT'])
 				{
 					$wpdb->query($wpdb->prepare("UPDATE FROM " . $wpdb->prefix . "paytm_donation WHERE id = %d", $_POST['ORDERID']));
 					$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Complete Payment' WHERE  id = %d", $_POST['ORDERID']));
