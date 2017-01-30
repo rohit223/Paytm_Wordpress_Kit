@@ -1,6 +1,7 @@
 <?php
 /*
-Plugin Name: PayTM Donate
+Plugin Name: PayTM Donate with Check Status.
+Version: 0.2
 Description: This plugin allows site owners to have a donate buttons for visitors to donate via PayTM in either set or custom amounts
 */
 
@@ -494,18 +495,36 @@ function paytm_donation_response(){
 //vidisha
 		if(verifychecksum_e($_POST,$paytm_merchant_key,$_POST['CHECKSUMHASH']) === "TRUE"){
 			if($_POST['RESPCODE'] =="01"){
-				$wpdb->query($wpdb->prepare("UPDATE FROM " . $wpdb->prefix . "paytm_donation WHERE id = %d", $_POST['ORDERID']));
-$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Complete Payment' WHERE  id = %d", $_POST['ORDERID']));
-				$msg= "Thank you for your order . Your transaction has been successful.";
+				// Create an array having all required parameters for status query.
+				$requestParamList = array("MID" => $paytm_merchant_id , "ORDERID" => $_POST['ORDERID']);
+				
+				// Call the PG's getTxnStatus() function for verifying the transaction status.
+				
+				$check_status_url = 'https://pguat.paytm.com/oltp/HANDLER_INTERNAL/TXNSTATUS';
+				if($paytm_mode == 'LIVE')
+				{
+					$check_status_url = 'https://secure.paytm.in/oltp/HANDLER_INTERNAL/TXNSTATUS';
+				}
+				$responseParamList = callAPI($check_status_url, $requestParamList);
+				if($responseParamList['STATUS']=='TXN_SUCCESS' && $responseParamList['TXNAMOUNT']==$order_amount)
+				{
+					$wpdb->query($wpdb->prepare("UPDATE FROM " . $wpdb->prefix . "paytm_donation WHERE id = %d", $_POST['ORDERID']));
+					$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Complete Payment' WHERE  id = %d", $_POST['ORDERID']));
+					$msg= "Thank you for your order . Your transaction has been successful.";
+				}
+				else 
+				{
+					$msg= "Thank You. However, the transaction has been Failed";
+					$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Fraud Payment' WHERE  id = %d", $_POST['ORDERID']));
+				}
 			}else{
 				$msg= "Thank You. However, the transaction has been Failed For Reason  : "  . sanitize_text_field($_POST['RESPMSG']);
-$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Canceled Payment' WHERE  id = %d", $_POST['ORDERID']));
+				$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Canceled Payment' WHERE  id = %d", $_POST['ORDERID']));
 	
 			}
 		}else{
-		
-			$msg= "Security error!";
-$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Payment Error' WHERE  id = %d", $_POST['ORDERID']));
+				$msg= "Security error!";
+				$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Payment Error' WHERE  id = %d", $_POST['ORDERID']));
 		}
 		$redirect_url =get_site_url() . '/' . get_permalink(get_the_ID());//echo $redirect_url ."<br />";
 		$redirect_url = add_query_arg( array('donation_msg'=> urlencode($msg)));
