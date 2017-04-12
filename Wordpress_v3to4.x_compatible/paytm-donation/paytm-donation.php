@@ -491,14 +491,18 @@ function paytm_donation_response(){
 				// Create an array having all required parameters for status query.
 				$requestParamList = array("MID" => $paytm_merchant_id , "ORDERID" => $_POST['ORDERID']);
 				
+				$StatusCheckSum = getChecksumFromArray($requestParamList, $paytm_merchant_key);
+							
+				$requestParamList['CHECKSUMHASH'] = $StatusCheckSum;
+				
 				// Call the PG's getTxnStatus() function for verifying the transaction status.
 				
-				$check_status_url = 'https://pguat.paytm.com/oltp/HANDLER_INTERNAL/TXNSTATUS';
+				$check_status_url = 'https://pguat.paytm.com/oltp/HANDLER_INTERNAL/getTxnStatus';
 				if($paytm_mode == 'LIVE')
 				{
-					$check_status_url = 'https://secure.paytm.in/oltp/HANDLER_INTERNAL/TXNSTATUS';
+					$check_status_url = 'https://secure.paytm.in/oltp/HANDLER_INTERNAL/getTxnStatus';
 				}
-				$responseParamList = callAPI($check_status_url, $requestParamList);
+				$responseParamList = callNewAPI($check_status_url, $requestParamList);
 				if($responseParamList['STATUS']=='TXN_SUCCESS' && $responseParamList['TXNAMOUNT']==$_POST['TXNAMOUNT'])
 				{
 					$wpdb->query($wpdb->prepare("UPDATE FROM " . $wpdb->prefix . "paytm_donation WHERE id = %d", $_POST['ORDERID']));
