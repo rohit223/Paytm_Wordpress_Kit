@@ -510,7 +510,7 @@ function paytm_donation_response(){
 				}
 				else 
 				{
-					$msg= "Thank You. However, the transaction has been Failed";
+					$msg= "It seems some issue in server to server communication. Kindly connect with administrator.";
 				}
 			}else{
 				$msg= "Thank You. However, the transaction has been Failed For Reason  : "  . sanitize_text_field($_POST['RESPMSG']);
