@@ -517,7 +517,7 @@ function paytm_donation_response(){
 				}
 				else 
 				{
-					$msg= "Thank You. However, the transaction has been Failed";
+					$msg= "It seems some issue in server to server communication. Kindly connect with administrator.";
 					$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Fraud Payment' WHERE  id = %d", $_POST['ORDERID']));
 				}
 			}else{
