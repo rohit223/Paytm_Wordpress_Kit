@@ -12,8 +12,10 @@ register_deactivation_hook(__FILE__, 'paytm_deactivation');
 
 add_action('init', 'paytm_donation_response');
 
-if($_GET['donation_msg']!=''){
-    add_action('the_content', 'paytmDonationShowMessage');
+if(isset($_GET['donation_msg'])){
+	if($_GET['donation_msg']!=''){
+	    add_action('the_content', 'paytmDonationShowMessage');
+	}
 }
 
  function paytmDonationShowMessage($content){
@@ -103,7 +105,7 @@ function paytm_settings_list(){
 			'name'    => 'paytm_merchant_id',
 			'value'   => '',
 			'type'    => 'textbox',
-      'hint'    => 'Merchant ID'
+    		'hint'    => 'Merchant ID'
 		),
 		array(
 			'display' => 'Merchant Key',
@@ -117,43 +119,57 @@ function paytm_settings_list(){
 			'name'    => 'paytm_website',
 			'value'   => '',
 			'type'    => 'textbox',
-      'hint'    => 'Website'
+    		'hint'    => 'Website'
 		),
 		array(
 			'display' => 'Industry Type ID',
 			'name'    => 'paytm_industry_type_id',
 			'value'   => '',
 			'type'    => 'textbox',
-      'hint'    => 'Industry Type ID'
+    		'hint'    => 'Industry Type ID'
 		),
 		array(
 			'display' => 'Channel ID',
 			'name'    => 'paytm_channel_id',
 			'value'   => '',
 			'type'    => 'textbox',
-      'hint'    => 'Channel ID e.g. WEB/WAP'
+    		'hint'    => 'Channel ID e.g. WEB/WAP'
 		),
-		array(
+		/*array(
 			'display' => 'Mode',
 			'name'    => 'paytm_mode',
 			'value'   => 'TEST',
 			'values'  => array('TEST'=>'TEST','LIVE'=>'LIVE'),
 			'type'    => 'select',
-      'hint'    => 'Change the mode of the payments'
+    		'hint'    => 'Change the mode of the payments'
+		),*/
+		array(
+			'display' => 'Transaction URL',
+			'name'    => 'transaction_url',
+			'value'   => '',
+			'type'    => 'textbox',
+    		'hint'    => 'Transaction URL'
+		),
+		array(
+			'display' => 'Transaction Status URL',
+			'name'    => 'transaction_status_url',
+			'value'   => '',
+			'type'    => 'textbox',
+    		'hint'    => 'Transaction Status URL'
 		),
 		array(
 			'display' => 'Default Amount',
 			'name'    => 'paytm_amount',
 			'value'   => '100',
 			'type'    => 'textbox',
-      'hint'    => 'the default donation amount, WITHOUT currency signs -- ie. 100'
+     		'hint'    => 'the default donation amount, WITHOUT currency signs -- ie. 100'
 		),
 		array(
 			'display' => 'Default Button/Link Text',
 			'name'    => 'paytm_content',
 			'value'   => 'Paytm',
 			'type'    => 'textbox',
-      'hint'    => 'the default text to be used for buttons or links if none is provided'
+    		'hint'    => 'the default text to be used for buttons or links if none is provided'
 		),
 		array(
 			'display' => 'Set CallBack URL',	
@@ -242,7 +258,9 @@ function paytm_donate_button() {
 						'paytm_website' => trim(get_option('paytm_website')),
 						'paytm_industry_type_id' => trim(get_option('paytm_industry_type_id')),
 						'paytm_channel_id' => trim(get_option('paytm_channel_id')),
-						'paytm_mode' => trim(get_option('paytm_mode')),
+						// 'paytm_mode' => get_option('paytm_mode'),
+						'transaction_url' => get_option('transaction_url'),
+						'transaction_status_url' => get_option('transaction_status_url'),
 						'paytm_callback' => trim(get_option('paytm_callback')),
 						'paytm_amount' => trim(get_option('paytm_amount')),		
 						'paytm_content' => trim(get_option('paytm_content'))						
@@ -328,11 +346,19 @@ function paytm_donate_button() {
 						
 						$checkSum = getChecksumFromArray ($post_params,$paytm_merchant_key);
 						$call = get_permalink();
-						$action_url="https://pguat.paytm.com/oltp-web/processTransaction?orderid=$order_id";
-						if($paytm_mode == 'LIVE'){
-							$action_url="https://secure.paytm.in/oltp-web/processTransaction?orderid=$order_id";
-						}
-						
+						/*	19751/17Jan2018	*/
+							/*$action_url="https://pguat.paytm.com/oltp-web/processTransaction?orderid=$order_id";
+							if($paytm_mode == 'LIVE'){
+								$action_url="https://secure.paytm.in/oltp-web/processTransaction?orderid=$order_id";
+							}*/
+
+							/*$action_url="https://securegw-stage.paytm.in/theia/processTransaction?orderid=$order_id";
+							if($paytm_mode == 'LIVE'){
+								$action_url="https://securegw.paytm.in/theia/processTransaction?orderid=$order_id";
+							}*/
+							$action_url=$transaction_url."?orderid=$order_id";
+						/*	19751/17Jan2018 end	*/
+
 						if($paytm_callback=='YES')
 						{
 						
@@ -401,7 +427,7 @@ EOF;
 							<p><label for="name"> Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label> <input type="text" name="donor_name"  maxlength="255" value=""/> </p>
 							<p>	<label for="email"> Email:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label><input type="text" name="donor_email"  maxlength="40" value=""/> </p>
 							<p>	<label for="phone"> Phone:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label> <input type="text" name="donor_phone"  maxlength="255" value=""/> </p>								    
-							<p> <label for="amount" >Amount:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label><input type="'.$total_type.'" name="donor_amount" value="'.$paytm_amount.'"/> </p>
+							<p> <label for="amount" >Amount:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label><input type="number" name="donor_amount" value="'.$paytm_amount.'"/> </p>
 							<p>	<label for="address"> Address:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</lable><input type="text" name="donor_address" maxlength="255" value=""/> </p>
 							<p>	<label for="city" > City:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label><input type="text" name="donor_city"  maxlength="255" value=""/> </p>
 							<p>	<label for="state" > State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label><input type="text" name="donor_state"  maxlength="255" value=""/> </p>
@@ -487,7 +513,9 @@ function paytm_donation_response(){
 						'paytm_website' => get_option('paytm_website'),
 						'paytm_industry_type_id' => get_option('paytm_industry_type_id'),
 						'paytm_channel_id' => get_option('paytm_channel_id'),
-						'paytm_mode' => get_option('paytm_mode'),
+						// 'paytm_mode' => get_option('paytm_mode'),
+						'transaction_url' => get_option('transaction_url'),
+						'transaction_status_url' => get_option('transaction_status_url'),
 						'paytm_callback' => get_option('paytm_callback'),
 						'paytm_amount' => get_option('paytm_amount')												
 					)
@@ -502,12 +530,21 @@ function paytm_donation_response(){
 							
 				$requestParamList['CHECKSUMHASH'] = $StatusCheckSum;
 				// Call the PG's getTxnStatus() function for verifying the transaction status.
+				/*	19751/17Jan2018	*/
+					/*$check_status_url = 'https://pguat.paytm.com/oltp/HANDLER_INTERNAL/getTxnStatus';
+					if($paytm_mode == 'LIVE')
+					{
+						$check_status_url = 'https://secure.paytm.in/oltp/HANDLER_INTERNAL/getTxnStatus';
+					}*/
+
+					/*$check_status_url = 'https://securegw-stage.paytm.in/merchant-status/getTxnStatus';
+					if($paytm_mode == 'LIVE')
+					{
+						$check_status_url = 'https://securegw.paytm.in/merchant-status/getTxnStatus';
+					}*/
+					$check_status_url = $transaction_status_url;
+				/*	19751/17Jan2018 end	*/
 				
-				$check_status_url = 'https://pguat.paytm.com/oltp/HANDLER_INTERNAL/getTxnStatus';
-				if($paytm_mode == 'LIVE')
-				{
-					$check_status_url = 'https://secure.paytm.in/oltp/HANDLER_INTERNAL/getTxnStatus';
-				}
 				$responseParamList = callNewAPI($check_status_url, $requestParamList);
 				if($responseParamList['STATUS']=='TXN_SUCCESS' && $responseParamList['TXNAMOUNT']==$_POST['TXNAMOUNT'])
 				{
