@@ -36,8 +36,8 @@ function wp_paytm_donation_listings_page() {
               <th width="8%" align="left" bgcolor="#FFFFFF">Country</th>
 							<th width="8%" align="left" bgcolor="#FFFFFF">Zipcode</th>
 							<th width="8%" align="left" bgcolor="#FFFFFF">Donation</th>
-              <th width="8%" align="left" bgcolor="#FFFFFF">Date</th>
               <th width="8%" align="left" bgcolor="#FFFFFF">Payment Status</th>
+              <th width="8%" align="left" bgcolor="#FFFFFF">Date</th>
             </tr>
             <?php
                             foreach ($donationEntries as $row) {
