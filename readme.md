@@ -5,3 +5,12 @@
 3. Select Paytm Settings from menu list and insert Paytm configuration values provided by Paytm team.(refer the screenshot: "Help_screenshot/settings.png")
 4. Create a new post or page with [paytmcheckout].(refer the screenshot: "Help_screenshot/add_post.png")
 5. To check all the donations, select Paytm Donation from menu list.(refer the screenshot: "Help_screenshot/donation_list.png")
+
+# Paytm PG URL Details
+	staging	
+		Transaction URL             => https://securegw-stage.paytm.in/theia/processTransaction
+		Transaction Status Url      => https://securegw-stage.paytm.in/merchant-status/getTxnStatus
+
+	Production
+		Transaction URL             => https://securegw.paytm.in/theia/processTransaction
+		Transaction Status Url      => https://securegw.paytm.in/merchant-status/getTxnStatus
