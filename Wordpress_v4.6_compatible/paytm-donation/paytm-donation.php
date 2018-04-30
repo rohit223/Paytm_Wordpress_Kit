@@ -225,7 +225,16 @@ function paytm_options_page() {
 					} else { echo '<input type="'.$setting['type'].'" name="'.$setting['name'].'" value="'.get_option($setting['name']).'" />'; }
 					echo ' (<em>'.$setting['hint'].'</em>)</td></tr>';
 				}
-				echo '<tr><th style="text-align:center;"><input type="submit" class="button-primary" value="Save Changes" />';
+				$path = plugin_dir_path( __FILE__ ) . "/paytm_version.txt";
+				$dt='Not define';
+				if(file_exists($path) && $path!=''){
+					$handle = fopen($path, "r");
+					if($handle !== false){
+						$date = fread($handle, 10); // i.e. DD-MM-YYYY or 25-04-2018
+						$dt=date("d F Y", strtotime($date));
+					}
+				}
+				echo '<tr> <th colspan="2">Paytm plugin updated on '.$dt.'</th> </tr><tr><th style="text-align:center;"><input type="submit" class="button-primary" value="Save Changes" />';
 				echo '<input type="hidden" name="action" value="update" />
 				<input type="hidden" name="page_options" value="';
 				foreach ($settings as $setting) {
