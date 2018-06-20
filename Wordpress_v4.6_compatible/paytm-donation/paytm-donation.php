@@ -515,12 +515,10 @@ function curltest_donation($content){
 			// this site homepage URL
 			$server = get_site_url();
 
-			$settings = get_option( "woocommerce_paytm_settings", null );
-
 			$testing_urls = array(
 											$server,
 											"www.google.co.in",
-											$settings["transaction_status_url"]
+											get_option('transaction_status_url')
 										);
 		}
 
