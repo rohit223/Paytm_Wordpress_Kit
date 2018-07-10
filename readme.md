@@ -19,7 +19,7 @@
         * Production  - https://securegw.paytm.in/merchant-status/getTxnStatus
       * Default Amount            - 100
       * Default Button/Link Test  - Paytm
-      * Set callback URL          - Yes
+      * Set callback URL          - Yes (only for version 3 To 4.x)
 
   6. Your Wordpress Donation plug-in is now installed. You can accept payment through Paytm.
 
