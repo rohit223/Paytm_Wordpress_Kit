@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Paytm Donate with Check Status
+ * Plugin Name: Paytm Payment Donation
  * Plugin URI: https://github.com/Paytm-Payments/
- * Description: This plugin allows site owners to have a donate buttons for visitors to donate via Paytm in either set or custom amounts
- * Version: 0.3
+ * Description: This plugin allow you to accept donation payments using Paytm. This plugin will add a simple form that user will fill, when he clicks on submit he will redirected to Paytm website to complete his transaction and on completion his payment, paytm will send that user back to your website along with transactions details. This plugin uses server-to-server verification to add additional security layer for validating transactions. Admin can also see all transaction details with payment status by going to "Paytm Payment Details" from menu in admin.
+ * Version: 1.0
  * Author: Paytm
- * Author URI: https://github.com/Paytm-Payments/
+ * Author URI: http://paywithpaytm.com/
  * Text Domain: Paytm Payments
  */
 
@@ -23,10 +23,8 @@ add_shortcode( 'paytmcheckout', 'paytm_donation_handler' );
 // add_action('admin_post_paytm_donation_request','paytm_donation_handler');
 
 
-if(isset($_GET['donation_msg'])){
-	if($_GET['donation_msg']!=''){
-		 add_action('the_content', 'paytmDonationShowMessage');
-	}
+if(isset($_GET['donation_msg']) && $_GET['donation_msg'] != ""){
+	add_action('the_content', 'paytmDonationShowMessage');
 }
 
 function paytmDonationShowMessage($content){
@@ -74,23 +72,19 @@ function paytm_activation() {
 	unset($paytm_pages['paytm-page']);
 	
 	$table_name = $wpdb->prefix . "paytm_donation";
-	 $sql = "CREATE TABLE IF NOT EXISTS `$table_name` (
-				`id` int(11) NOT NULL AUTO_INCREMENT,
-				`name` varchar(255) CHARACTER SET utf8 NOT NULL,
-				`phone` varchar(255) NOT NULL,
-				`email` varchar(255) NOT NULL,
-				`address` varchar(255) CHARACTER SET utf8 NOT NULL,
-				`city` varchar(255) CHARACTER SET utf8 NOT NULL,
-				`country` varchar(255) CHARACTER SET utf8 NOT NULL,
-				`state` varchar(255) CHARACTER SET utf8 NOT NULL,
-				`zip` varchar(255) CHARACTER SET utf8 NOT NULL,
-				`amount` varchar(255) NOT NULL,
-				`comment` text NOT NULL,
-				`payment_status` varchar(255) NOT NULL,
-				`payment_method` varchar(255) NOT NULL,
-				`date` datetime NOT NULL,
-				PRIMARY KEY (`id`),
-				UNIQUE KEY `id` (`id`)
+	$sql = "CREATE TABLE IF NOT EXISTS `$table_name` (
+				`id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+				`name` varchar(255),
+				`email` varchar(255),
+				`phone` varchar(255),
+				`address` varchar(255),
+				`city` varchar(255),
+				`country` varchar(255),
+				`state` varchar(255),
+				`zip` varchar(255),
+				`amount` varchar(255),
+				`payment_status` varchar(255),
+				`date` datetime
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1";
 
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
@@ -186,8 +180,12 @@ if (is_admin()) {
 
 
 function paytm_admin_menu() {
-	add_menu_page('Paytm Settings', 'Paytm Settings', 'manage_options', 'paytm_options_page', 'paytm_options_page');
-	add_menu_page('Paytm Payment Details', 'Paytm Payment Details', 'manage_options', 'wp_paytm_donation', 'wp_paytm_donation_listings_page');
+	add_menu_page('Paytm Donation', 'Paytm Donation', 'manage_options', 'paytm_options_page', 'paytm_options_page', plugin_dir_url(__FILE__).'assets/logo.ico');
+
+	add_submenu_page('paytm_options_page', 'Paytm Donation Settings', 'Settings', 'manage_options', 'paytm_options_page');
+
+	add_submenu_page('paytm_options_page', 'Paytm Donation Payment Details', 'Payment Details', 'manage_options', 'wp_paytm_donation', 'wp_paytm_donation_listings_page');
+	
 	require_once(dirname(__FILE__) . '/paytm-donation-listings.php');
 }
 
@@ -285,11 +283,11 @@ function paytm_donation_form(){
 					</p>
 					<p>
 						<label for="donor_phone">Phone:</label>
-						<input type="text" name="donor_phone" maxlength="255" value=""/>
+						<input type="text" name="donor_phone" maxlength="15" value=""/>
 					</p>
 					<p>
 						<label for="donor_amount">Amount:</label>
-						<input type="text" name="donor_amount" maxlength="255" value="'.trim(get_option('paytm_amount')).'"/>
+						<input type="text" name="donor_amount" maxlength="10" value="'.trim(get_option('paytm_amount')).'"/>
 					</p>
 					<p>
 						<label for="donor_address">Address:</label>
@@ -305,7 +303,7 @@ function paytm_donation_form(){
 					</p>
 					<p>
 						<label for="donor_postal_code">Postal Code:</label>
-						<input type="text" name="donor_postal_code" maxlength="255" value=""/>
+						<input type="text" name="donor_postal_code" maxlength="10" value=""/>
 					</p>
 					<p>
 						<label for="donor_country">Country:</label>
@@ -360,13 +358,13 @@ function paytm_donation_submit(){
 
 	if($valid){
 		
-		require_once(dirname(__FILE__) . '/encdec_paytm.php');
+		require_once(dirname(__FILE__) . '/lib/encdec_paytm.php');
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . "paytm_donation";
 		$data = array(
 					'name' => sanitize_text_field($_POST['donor_name']),
-					'email' => sanitize_text_field($_POST['donor_email']),
+					'email' => sanitize_email($_POST['donor_email']),
 					'phone' => sanitize_text_field($_POST['donor_phone']),
 					'address' => sanitize_text_field($_POST['donor_address']),
 					'city' => sanitize_text_field($_POST['donor_city']),
@@ -377,9 +375,13 @@ function paytm_donation_submit(){
 					'payment_status' => 'Pending Payment',
 					'date' => date('Y-m-d H:i:s'),
 				);
-					
-					
-		$wpdb->insert($table_name, $data);
+
+		$result = $wpdb->insert($table_name, $data);
+
+		if(!$result){
+			throw new Exception($wpdb->last_error);
+		}
+
 		$order_id = $wpdb->insert_id;
 
 		// $order_id = 'TEST_'.strtotime("now").'-'.$order_id; //just for testing
@@ -390,13 +392,13 @@ function paytm_donation_submit(){
 			'CHANNEL_ID' =>  trim(get_option('paytm_channel_id')),
 			'INDUSTRY_TYPE_ID' =>  trim(get_option('paytm_industry_type_id')),
 			'ORDER_ID' => $order_id,
-			'TXN_AMOUNT' => $_POST['donor_amount'],
-			'CUST_ID' => $_POST['donor_email'],
-			'EMAIL' => $_POST['donor_email'],
+			'TXN_AMOUNT' => sanitize_text_field($_POST['donor_amount']),
+			'CUST_ID' => sanitize_email($_POST['donor_email']),
+			'EMAIL' => sanitize_email($_POST['donor_email']),
 			'CALLBACK_URL' => get_permalink(),
 		);		
 	
-		$post_params["CHECKSUMHASH"] = getChecksumFromArray(	$post_params,
+		$post_params["CHECKSUMHASH"] = PaytmDonation::getChecksumFromArray(	$post_params,
 																				trim(get_option('paytm_merchant_key'))
 																			);
 
@@ -439,14 +441,14 @@ function paytm_donation_response(){
 	
 	if(! empty($_POST) && isset($_POST['ORDERID'])){
 
-		require_once(dirname(__FILE__) . '/encdec_paytm.php');
+		require_once(dirname(__FILE__) . '/lib/encdec_paytm.php');
 		global $wpdb;
 
 		$paytm_merchant_key = trim(get_option('paytm_merchant_key'));
 		$paytm_merchant_id = trim(get_option('paytm_merchant_id'));
 		$transaction_status_url = trim(get_option('transaction_status_url'));
 
-		if(verifychecksum_e($_POST, $paytm_merchant_key, $_POST['CHECKSUMHASH']) === "TRUE") {
+		if(PaytmDonation::verifychecksum_e($_POST, $paytm_merchant_key, $_POST['CHECKSUMHASH']) === "TRUE") {
 			
 			if($_POST['RESPCODE'] == "01"){
 
@@ -454,29 +456,29 @@ function paytm_donation_response(){
 				$requestParamList = array("MID" => $paytm_merchant_id, "ORDERID" => $_POST['ORDERID']);
 
 				// $_POST['ORDERID'] = substr($_POST['ORDERID'], strpos($_POST['ORDERID'], "-") + 1); // just for testing
-				$StatusCheckSum = getChecksumFromArray($requestParamList, $paytm_merchant_key);
+				
+				$StatusCheckSum = PaytmDonation::getChecksumFromArray($requestParamList, $paytm_merchant_key);
 
 				$requestParamList['CHECKSUMHASH'] = $StatusCheckSum;
 
-				$responseParamList = callNewAPI($transaction_status_url, $requestParamList);
+				$responseParamList = PaytmDonation::callNewAPI($transaction_status_url, $requestParamList);
 
 				if($responseParamList['STATUS'] == 'TXN_SUCCESS' && $responseParamList['TXNAMOUNT'] == $_POST['TXNAMOUNT']) {
-					$wpdb->query($wpdb->prepare("UPDATE FROM " . $wpdb->prefix . "paytm_donation WHERE id = %d", $_POST['ORDERID']));
-					$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Complete Payment' WHERE  id = %d", $_POST['ORDERID']));
-					$msg= "Thank you for your order. Your transaction has been successful.";
+					$msg = "Thank you for your order. Your transaction has been successful.";
+					$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Complete Payment' WHERE  id = %d", sanitize_text_field($_POST['ORDERID'])));
 				
 				} else  {
 					$msg = "It seems some issue in server to server communication. Kindly connect with administrator.";
-					$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Fraud Payment' WHERE id = %d", $_POST['ORDERID']));
+					$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Fraud Payment' WHERE id = %d", sanitize_text_field($_POST['ORDERID'])));
 				}
 
 			} else {
 				$msg = "Thank You. However, the transaction has been Failed For Reason: " . sanitize_text_field($_POST['RESPMSG']);
-				$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Canceled Payment' WHERE  id = %d", $_POST['ORDERID']));
+				$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Cancelled Payment' WHERE id = %d", sanitize_text_field($_POST['ORDERID'])));
 			}
 		} else {
 			$msg = "Security error!";
-			$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Payment Error' WHERE  id = %d", $_POST['ORDERID']));
+			$wpdb->query($wpdb->prepare("UPDATE ".$wpdb->prefix . "paytm_donation SET payment_status = 'Payment Error' WHERE  id = %d", sanitize_text_field($_POST['ORDERID'])));
 		}
 
 		$redirect_url = get_site_url() . '/' . get_permalink(get_the_ID());
@@ -508,7 +510,7 @@ function curltest_donation($content){
 
 		// if any specific URL passed to test for
 		if(isset($_GET["url"]) && $_GET["url"] != ""){
-			$testing_urls = array($_GET["url"]);   
+			$testing_urls = array(esc_url_raw($_GET["url"]));
 		
 		} else {
 
@@ -517,7 +519,7 @@ function curltest_donation($content){
 
 			$testing_urls = array(
 											$server,
-											"www.google.co.in",
+											"https://www.gstatic.com/generate_204",
 											get_option('transaction_status_url')
 										);
 		}
@@ -526,13 +528,12 @@ function curltest_donation($content){
 		foreach($testing_urls as $key=>$url){
 
 			$debug[$key]["info"][] = "Connecting to <b>" . $url . "</b> using cURL";
+			
+			$response = wp_remote_get($url);
 
-			$ch = curl_init($url);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-			$res = curl_exec($ch);
+			if ( is_array( $response ) ) {
 
-			if (!curl_errno($ch)) {
-				$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+				$http_code = wp_remote_retrieve_response_code($response);
 				$debug[$key]["info"][] = "cURL executed succcessfully.";
 				$debug[$key]["info"][] = "HTTP Response Code: <b>". $http_code . "</b>";
 
@@ -540,12 +541,9 @@ function curltest_donation($content){
 
 			} else {
 				$debug[$key]["info"][] = "Connection Failed !!";
-				$debug[$key]["info"][] = "Error Code: <b>" . curl_errno($ch) . "</b>";
-				$debug[$key]["info"][] = "Error: <b>" . curl_error($ch) . "</b>";
+				$debug[$key]["info"][] = "Error: <b>" . $response->get_error_message() . "</b>";
 				break;
 			}
-
-			curl_close($ch);
 		}
 	}
 
@@ -561,7 +559,7 @@ function curltest_donation($content){
 		$content .= "<hr/>";
 	}
 
-	return $content;
+	return esc_html($content);
 }
 /*
 * Code to test Curl
