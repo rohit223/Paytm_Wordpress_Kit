@@ -559,7 +559,7 @@ function curltest_donation($content){
 		$content .= "<hr/>";
 	}
 
-	return esc_html($content);
+	return $content;
 }
 /*
 * Code to test Curl
