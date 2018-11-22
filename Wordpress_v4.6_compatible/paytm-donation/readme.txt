@@ -19,3 +19,5 @@ This plugin allow you to accept donation payments using Paytm. This plugin will 
 * Select "Paytm Settings" from menu list and update Paytm configuration values provided by Paytm team
 * Create a new post or page with and put shortcode [paytmcheckout] there
 * Your Wordpress Donation plugin is now setup. You can now accept donation payment through Paytm.
+
+See Video : https://www.youtube.com/watch?v=topfwOfUlOE
